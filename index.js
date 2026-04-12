@@ -20,83 +20,82 @@ const bot = new Eris(`${process.env.TOKEN}`, {
 const commands = new Map();
 const aliases = new Map();
 
-let loaded = 0;
-let skipped = 0;
-let sendString = "";
+let commandPaths=[];
+let warnings = [];
+let passes = [];
 
-function loadCommands(dir, cleartoggle, msg){
-	if(cleartoggle){
-		commands.clear();
-		aliases.clear();
-		loaded=0;
-		skipped=0;
-		sendString="";
-	}
-
+function locateCommands(dir){
 	const files = fs.readdirSync(dir);
 
 	for(const file of files){
 		const fullpath = path.join(dir, file);
 
 		if(fs.statSync(fullpath).isDirectory()){
-			loadCommands(fullpath, false);
-			continue;
+			locateCommands(fullpath);
+		}else{
+			commandPaths.push(fullpath);
 		}
+	}
+}
 
+function loadCommands(cleartoggle){
+	if(cleartoggle){
+		commands.clear();
+		aliases.clear();
+		commandPaths=[];
+		passes=[];
+		warnings=[];
+	}
+
+	locateCommands(`${process.cwd()}/commands`);
+
+	commandPaths.forEach((fullpath) => {
+		delete require.cache[require.resolve(fullpath)];
 		const cmd = require(fullpath);
 		const dirs = fullpath.split("/");
 		const cmddir = dirs.slice(dirs.indexOf("commands")).join("/");
 
 		if(!cmd.name){
-			let warning=`${colors.brightYellow("[!]")} Skipped loading ${cmddir}. Missing command name.`;
-			sendUpdate(msg, warning);
-			console.warn(warning); 
-			skipped++;
+			warnings.push(`Skipped loading ${cmddir}. Missing command name.`);
 		}else if(commands.get(cmd.name) || commands.get(aliases.get(cmd.name))){
-			let warning=`${colors.brightYellow("[!]")} Skipped loading ${cmddir}. Duplicate command names.`;
-			sendUpdate(msg, warning);
-			console.warn(warning); 
-			skipped++;
+			warnings.push(`Skipped loading ${cmddir}. Duplicate command names.`);
 		}else if(!cmd.description){
-			let warning=`${colors.brightYellow("[!]")} Skipped loading ${cmddir}. Missing command description.`;
-			sendUpdate(msg, warning);
-			console.warn(warning); 
-			skipped++;
+			warnings.push(`Skipped loading ${cmddir}. Missing command description.`);
 		}else if(!cmd.usage){
-			let warning=`${colors.brightYellow("[!]")} Skipped loading ${cmddir}. Missing command usage.`;
-			sendUpdate(msg, warning);
-			console.warn(warning); 
-			skipped++;
+			warnings.push(`Skipped loading ${cmddir}. Missing command usage.`);
 		}else if(typeof cmd.execute !== "function") {
-			let warning=`${colors.brightYellow("[!]")} Skipped loading ${cmddir}. Missing execute function.`;
-			sendUpdate(msg, warning);
-			console.warn(warning); 
-			skipped++;
+			warnings.push(`Skipped loading ${cmddir}. Missing execute function.`);
 		}else{
 			commands.set(cmd.name, cmd);
 			if(cmd.aliases){
-				console.log(`${colors.brightGreen("[S]")} Loaded command: ${cmd.name} ( ${cmddir} ) with aliases [${cmd.aliases}]`);
+				passes.push(`Loaded command: ${cmd.name} ( ${cmddir} ) with aliases [${cmd.aliases}]`);
 
 				for (const alias of cmd.aliases) {
 					aliases.set(alias, cmd.name);
 				}
 			}else{
-				console.log(`${colors.brightGreen("[S]")} Loaded command: ${cmd.name} ( ${cmddir} ) without any aliases`);
+				passes.push(`Loaded command: ${cmd.name} ( ${cmddir} ) without any aliases`);
 			}
-			loaded++;
 		}
-	}
-}
+	});
 
-async function sendUpdate(msg, content){
-	if (msg) bot.createMessage(msg.channel.id, content);
+	return {warnings, passes};
 }
 
 bot.on("ready", () => {
-	loadCommands(`${process.cwd()}/commands`, true);
-	console.log(`${colors.blue(bot.user.username + "#" + bot.user.discriminator)} is ready to run with ${loaded+skipped} commands detected.`);
-	console.log(`Loaded: ${loaded}`);
-	console.log(`Skipped: ${skipped}`);
+	loadCommands(true);
+
+	passes.forEach((pass)=>{
+		console.log(`${colors.brightGreen("[S]")} ${pass}`);
+	});
+	warnings.forEach((warning)=>{
+		console.warn(`${colors.brightYellow("[!]")} ${warning}`);
+	});
+
+	console.log(`Loaded: ${passes.length}`);
+	console.log(`Skipped: ${warnings.length}`);
+
+	console.log(`${colors.blue(bot.user.username + "#" + bot.user.discriminator)} is ready to run with ${passes.length+warnings.length} commands detected.`);
 });
 
 bot.on("messageCreate", async (msg) => {
