@@ -1,0 +1,24 @@
+{
+  "name": "discobolus",
+  "version": "1.0.0",
+  "description": "discord bot",
+  "homepage": "https://github.com/vecondite/discobolus#readme",
+  "bugs": {
+    "url": "https://github.com/vecondite/discobolus/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vecondite/discobolus.git"
+  },
+  "license": "ISC",
+  "author": "vecondite",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.1",
+    "eris": "^0.18.0"
+  }
+}
