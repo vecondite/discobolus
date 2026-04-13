@@ -33,7 +33,7 @@ function locateCommands(dir: string){
 
 		if(fs.statSync(fullpath).isDirectory()){
 			locateCommands(fullpath);
-		}else if(file.endsWith(".js")){
+		}else if(file.endsWith(".js") || ( file.endsWith(".ts") && !file.endsWith("d.ts"))){
 			commandPaths.push(fullpath);
 		}
 	}
@@ -48,7 +48,10 @@ async function loadCommands(cleartoggle: boolean){
 		warnings=[];
 	}
 
-	locateCommands(`${process.cwd()}/dist/commands`);
+	
+	const isTS = import.meta.url.endsWith('.ts');
+	const commandsDir = isTS ? path.join(process.cwd(), "src", "commands") : path.join(process.cwd(), "dist", "commands");
+	locateCommands(commandsDir);
 
 	for(const fullpath of commandPaths) {
 		const fileUrl = `file://${fullpath}?update=${Date.now()}`;
@@ -62,25 +65,25 @@ async function loadCommands(cleartoggle: boolean){
 		const cmddir = dirs.slice(dirs.indexOf("commands")).join("/");
 
 		if(!cmd.name){
-			warnings.push(`Skipped loading ${cmddir}. Missing command name.`);
+			warnings.push(`${cmddir}. Missing command name.`);
 		}else if(commands.get(cmd.name) || commands.get(aliases.get(cmd.name))){
-			warnings.push(`Skipped loading ${cmddir}. Duplicate command names.`);
+			warnings.push(`${cmddir}. Duplicate command names.`);
 		}else if(!cmd.description){
-			warnings.push(`Skipped loading ${cmddir}. Missing command description.`);
+			warnings.push(`${cmddir}. Missing command description.`);
 		}else if(!cmd.usage){
-			warnings.push(`Skipped loading ${cmddir}. Missing command usage.`);
+			warnings.push(`${cmddir}. Missing command usage.`);
 		}else if(typeof cmd.execute !== "function") {
-			warnings.push(`Skipped loading ${cmddir}. Missing execute function.`);
+			warnings.push(`${cmddir}. Missing execute function.`);
 		}else{
 			commands.set(cmd.name, cmd);
 			if(cmd.aliases){
-				passes.push(`Loaded command: ${cmd.name} ( ${cmddir} ) with aliases [${cmd.aliases}]`);
+				passes.push(`${cmd.name} ( ${cmddir} ) with aliases [${cmd.aliases}]`);
 
 				for (const alias of cmd.aliases) {
 					aliases.set(alias, cmd.name);
 				}
 			}else{
-				passes.push(`Loaded command: ${cmd.name} ( ${cmddir} ) without any aliases`);
+				passes.push(`${cmd.name} ( ${cmddir} ) without any aliases`);
 			}
 		}
 	};
@@ -92,10 +95,10 @@ bot.on("ready", async () => {
 	await loadCommands(true);
 
 	passes.forEach((pass)=>{
-		console.log(`${("[S]" as any).brightGreen} ${pass}`);
+		console.log(`${("[LOAD]" as any).brightGreen} ${pass}`);
 	});
 	warnings.forEach((warning)=>{
-		console.warn(`${("[!]" as any).brightYellow} ${warning}`);
+		console.warn(`${("[SKIP]" as any).brightYellow} ${warning}`);
 	});
 
 	console.log(`Loaded: ${passes.length}`);
