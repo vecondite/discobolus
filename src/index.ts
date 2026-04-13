@@ -1,15 +1,16 @@
-var colors = require('colors');
+import colors from "colors";
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
-require('dotenv').config();
+import * as dotenv from "dotenv";
+dotenv.config();
 
-const Eris = require("eris");
-const { dir } = require('console');
+import * as Eris from "eris";
+
 const prefix = "%";
 
-const bot = new Eris(`${process.env.TOKEN}`, {
+const bot: Eris.Client = new Eris.Client(`${process.env.TOKEN!}`, {
 	intents: [
 		"guilds",
 		"guildMessages",
@@ -20,11 +21,11 @@ const bot = new Eris(`${process.env.TOKEN}`, {
 const commands = new Map();
 const aliases = new Map();
 
-let commandPaths=[];
-let warnings = [];
-let passes = [];
+let commandPaths: string[] = [];
+let warnings: string[] = [];
+let passes: string[] = [];
 
-function locateCommands(dir){
+function locateCommands(dir: string){
 	const files = fs.readdirSync(dir);
 
 	for(const file of files){
@@ -32,13 +33,13 @@ function locateCommands(dir){
 
 		if(fs.statSync(fullpath).isDirectory()){
 			locateCommands(fullpath);
-		}else{
+		}else if(file.endsWith(".js")){
 			commandPaths.push(fullpath);
 		}
 	}
 }
 
-function loadCommands(cleartoggle){
+async function loadCommands(cleartoggle: boolean){
 	if(cleartoggle){
 		commands.clear();
 		aliases.clear();
@@ -47,12 +48,17 @@ function loadCommands(cleartoggle){
 		warnings=[];
 	}
 
-	locateCommands(`${process.cwd()}/commands`);
+	locateCommands(`${process.cwd()}/dist/commands`);
 
-	commandPaths.forEach((fullpath) => {
-		delete require.cache[require.resolve(fullpath)];
-		const cmd = require(fullpath);
-		const dirs = fullpath.split("/");
+	for(const fullpath of commandPaths) {
+		const fileUrl = `file://${fullpath}?update=${Date.now()}`;
+        const cmdModule = await import(fileUrl);
+        const cmd = cmdModule.default || cmdModule;
+
+		let dirs = fullpath.split("/");
+		if(dirs.length === 1){
+			dirs = fullpath.split("\\");
+		}
 		const cmddir = dirs.slice(dirs.indexOf("commands")).join("/");
 
 		if(!cmd.name){
@@ -77,19 +83,19 @@ function loadCommands(cleartoggle){
 				passes.push(`Loaded command: ${cmd.name} ( ${cmddir} ) without any aliases`);
 			}
 		}
-	});
+	};
 
 	return {warnings, passes};
 }
 
-bot.on("ready", () => {
-	loadCommands(true);
+bot.on("ready", async () => {
+	await loadCommands(true);
 
 	passes.forEach((pass)=>{
-		console.log(`${colors.brightGreen("[S]")} ${pass}`);
+		console.log(`${("[S]" as any).brightGreen} ${pass}`);
 	});
 	warnings.forEach((warning)=>{
-		console.warn(`${colors.brightYellow("[!]")} ${warning}`);
+		console.warn(`${("[!]" as any).brightYellow} ${warning}`);
 	});
 
 	console.log(`Loaded: ${passes.length}`);
@@ -100,9 +106,9 @@ bot.on("ready", () => {
 
 bot.on("messageCreate", async (msg) => {
 	if (msg.author.bot || !msg.content.startsWith(prefix)) return;
-	bot.createMessage(msg.channel.id, `you said ${msg.content}`);
-
+//	bot.createMessage(msg.channel.id, `you said ${msg.content}`);
 	const args = msg.content.split(" ");
+	if(!args[0]) return;
 	const command = args[0].slice(1);
 	args.shift();
 
@@ -111,7 +117,7 @@ bot.on("messageCreate", async (msg) => {
 
 	if(commands.get(command) && command=="help"){
 		cmd.execute(bot, msg, args, commands, aliases, prefix);
-	}if(commands.get(command) && command=="refresh"){
+	}else if(commands.get(command) && command=="refresh"){
 		cmd.execute(bot, msg, loadCommands);
 	}else{
 		await cmd.execute(bot, msg, args);
