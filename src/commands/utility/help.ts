@@ -34,7 +34,11 @@ export default {
             if(!command){
                 output = `Command not found. For a list of commands: \`\`\`${prefix}help\`\`\``
             }else{
-                output = `**${command.name}**\n- ${command.description}\nUsage: \`\`\`${prefix}${command.usage}\`\`\``
+                if(command.aliases){
+                    output = `# ${command.name}\nAliases:\n\`\`\`${command.aliases}\`\`\`\nDescription:\`\`\`${command.description}\`\`\`\nUsage: \`\`\`${prefix}${command.usage}\`\`\``
+                }else{
+                    output = `# ${command.name}\nDescription:\`\`\`${command.description}\`\`\`\nUsage: \`\`\`${prefix}${command.usage}\`\`\``
+                }
             }
         }
 
