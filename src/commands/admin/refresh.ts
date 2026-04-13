@@ -13,12 +13,12 @@ export default {
         let updates = "";
         const { warnings, passes } = await loadCommands(true);
         passes.forEach((pass)=>{
-            //console.log(`${("[S]" as any).brightGreen} ${pass}`);
-            updates+=`${pass}\n`;
+            //console.log(`${("[LOAD]" as any).brightGreen} ${pass}`);
+            updates+=`[LOAD] ${pass}\n`;
         });
         warnings.forEach((warning)=>{
-            //console.warn(`${("[!]" as any).brightYellow} ${warning}`);
-            updates+=`${warning}\n`;
+            //console.warn(`${("[SKIP]" as any).brightYellow} ${warning}`);
+            updates+=`[SKIP] ${warning}\n`;
         });
         bot.createMessage(msg.channel.id, `\`\`\`${updates}\`\`\``);
         //console.log(`Loaded: ${passes.length}`);
