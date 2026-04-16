@@ -1,5 +1,5 @@
 import Eris from "eris";
-import {type CommandValue} from "./../types.js";
+import {type CommandValue} from "../types.js";
 
 export default {
     name: "help",
