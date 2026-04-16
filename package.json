@@ -2,6 +2,9 @@
   "name": "discobolus",
   "version": "1.0.0",
   "description": "discord bot",
+  "workspaces": [
+    "apps/*"
+  ],
   "homepage": "https://github.com/vecondite/discobolus#readme",
   "bugs": {
     "url": "https://github.com/vecondite/discobolus/issues"
@@ -17,13 +20,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "dependencies": {
-    "colors": "^1.4.0",
-    "dotenv": "^17.4.1",
-    "eris": "^0.18.0",
-    "typescript": "^6.0.2"
-  },
   "devDependencies": {
     "@types/node": "^25.6.0"
+  },
+  "dependencies": {
+    "typescript": "^6.0.2"
   }
 }

@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 
 import * as dotenv from "dotenv";
-dotenv.config();
+dotenv.config({path: "./.env"});
 
 import * as Eris from "eris";
 
@@ -21,9 +21,10 @@ const bot: Eris.Client = new Eris.Client(`${process.env.TOKEN!}`, {
 const commands = new Map();
 const aliases = new Map();
 
-let commandPaths: string[] = [];
 let warnings: string[] = [];
 let passes: string[] = [];
+
+let commandPaths: string[] = [];
 
 function locateCommands(dir: string){
 	const files = fs.readdirSync(dir);
@@ -50,7 +51,7 @@ async function loadCommands(cleartoggle: boolean){
 
 	
 	const isTS = import.meta.url.endsWith('.ts');
-	const commandsDir = isTS ? path.join(process.cwd(), "src", "commands") : path.join(process.cwd(), "dist", "commands");
+	const commandsDir = isTS ? path.join(process.cwd(), "apps", "bot", "src", "commands") : path.join(process.cwd(), "apps", "bot", "dist", "commands");
 	locateCommands(commandsDir);
 
 	for(const fullpath of commandPaths) {
@@ -65,25 +66,25 @@ async function loadCommands(cleartoggle: boolean){
 		const cmddir = dirs.slice(dirs.indexOf("commands")).join("/");
 
 		if(!cmd.name){
-			warnings.push(`${cmddir}. Missing command name.`);
+			warnings.push(`[COMMAND] ${cmddir}. Missing command name.`);
 		}else if(commands.get(cmd.name) || commands.get(aliases.get(cmd.name))){
-			warnings.push(`${cmddir}. Duplicate command names.`);
+			warnings.push(`[COMMAND] ${cmddir}. Duplicate command names.`);
 		}else if(!cmd.description){
-			warnings.push(`${cmddir}. Missing command description.`);
+			warnings.push(`[COMMAND] ${cmddir}. Missing command description.`);
 		}else if(!cmd.usage){
-			warnings.push(`${cmddir}. Missing command usage.`);
+			warnings.push(`[COMMAND] ${cmddir}. Missing command usage.`);
 		}else if(typeof cmd.execute !== "function") {
-			warnings.push(`${cmddir}. Missing execute function.`);
+			warnings.push(`[COMMAND] ${cmddir}. Missing execute function.`);
 		}else{
 			commands.set(cmd.name, cmd);
 			if(cmd.aliases){
-				passes.push(`${cmd.name} ( ${cmddir} ) with aliases [${cmd.aliases}]`);
+				passes.push(`[COMMAND] ${cmd.name} ( ${cmddir} ) with aliases [${cmd.aliases}]`);
 
 				for (const alias of cmd.aliases) {
 					aliases.set(alias, cmd.name);
 				}
 			}else{
-				passes.push(`${cmd.name} ( ${cmddir} ) without any aliases`);
+				passes.push(`[COMMAND] ${cmd.name} ( ${cmddir} ) without any aliases`);
 			}
 		}
 	};
@@ -91,20 +92,72 @@ async function loadCommands(cleartoggle: boolean){
 	return {warnings, passes};
 }
 
-bot.on("ready", async () => {
-	await loadCommands(true);
+let eventPaths: string[] = [];
 
-	passes.forEach((pass)=>{
-		console.log(`${("[LOAD]" as any).brightGreen} ${pass}`);
-	});
-	warnings.forEach((warning)=>{
-		console.warn(`${("[SKIP]" as any).brightYellow} ${warning}`);
-	});
+function locateEvents(dir: string){
+	const files = fs.readdirSync(dir);
 
-	console.log(`Loaded: ${passes.length}`);
-	console.log(`Skipped: ${warnings.length}`);
+	for(const file of files){
+		const fullpath = path.join(dir, file);
 
-	console.log(`${colors.blue(bot.user.username + "#" + bot.user.discriminator)} is ready to run with ${passes.length+warnings.length} commands detected.`);
+		if(fs.statSync(fullpath).isDirectory()){
+			locateEvents(fullpath);
+		}else if(file.endsWith(".js") || ( file.endsWith(".ts") && !file.endsWith("d.ts"))){
+			eventPaths.push(fullpath);
+		}
+	}
+}
+
+async function loadEvents(cleartoggle: boolean){
+	if(cleartoggle){
+		eventPaths=[];
+	}
+
+	const isTS = import.meta.url.endsWith('.ts');
+	const eventsDir = isTS ? path.join(process.cwd(), "apps", "bot", "src", "events") : path.join(process.cwd(), "apps", "bot", "dist", "events");
+	locateEvents(eventsDir);
+
+	for(const fullpath of eventPaths) {
+		const fileUrl = `file://${fullpath}?update=${Date.now()}`;
+        const eventModule = await import(fileUrl);
+        const event = eventModule.default || eventModule;
+
+		let dirs = fullpath.split("/");
+		if(dirs.length === 1){
+			dirs = fullpath.split("\\");
+		}
+		const eventdir = dirs.slice(dirs.indexOf("events")).join("/");
+
+		if(!event.name){
+			warnings.push(`[EVENT] ${eventdir}. Missing event name.`);
+		}else if(event.once){
+			warnings.push(`${eventdir}. Missing once? boolean.`);
+		}else if(typeof event.execute !== "function") {
+			warnings.push(`[EVENT] ${eventdir}. Missing execute function.`);
+		}else{
+			event.once ? bot.once(event.name, (...args) => event.execute(bot, ...args)) : bot.on(event.name, (...args) => event.execute(bot, ...args));
+			passes.push(`[EVENT] ${event.name} ( ${eventdir} ) without any aliases`);
+		}
+	};
+
+	return {warnings, passes};
+}
+
+await loadCommands(true);
+await loadEvents(true);
+
+passes.forEach((pass)=>{
+	console.log(`${("[LOAD]" as any).brightGreen} ${pass}`);
+});
+warnings.forEach((warning)=>{
+	console.warn(`${("[SKIP]" as any).brightYellow} ${warning}`);
+});
+
+console.log(`Loaded: ${passes.length}`);
+console.log(`Skipped: ${warnings.length}`);
+
+bot.once("ready", async () => {
+	//console.log(`${colors.blue(bot.user.username + "#" + bot.user.discriminator)} is ready to run with ${passes.length+warnings.length} commands detected.`);
 });
 
 bot.on("messageCreate", async (msg) => {
