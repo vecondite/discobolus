@@ -5,17 +5,26 @@ export interface CommandValue {
     description: string;
     usage: string;
     aliases?: string[];
-    execute: (
-        bot: Eris.Client, 
-        msg: Eris.Message, 
-        args: string[], 
-        commands: Map<string, CommandValue>, 
-        aliases: Map<string, string>, 
-        prefix: string
-    ) => Promise<void>;
+    execute: (ctx: CommandContext) => Promise<void>;
 }
 
 export type LoadResult = {
     warnings: string[];
     passes: string[];
+};
+
+export type CommandContext = {
+    bot: Eris.Client;
+    msg: Eris.Message | any;
+    args: string[];
+    commands: Map<string, CommandValue>;
+    aliases: Map<string, string>;
+    prefix: string;
+    loadCommands: (cleartoggle: boolean) => Promise<LoadResult>;
+    loadEvents: (cleartoggle: boolean) => {};
+};
+
+export type Output = {
+  error: boolean;
+  message: string;
 };

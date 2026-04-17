@@ -1,19 +1,13 @@
 import Eris from "eris";
-import {type CommandValue} from "../types.js";
+import {type CommandContext, type CommandValue} from "../types.js";
 
 export default {
     name: "help",
     description: "usage of all commands of the bot",
     usage: "help [command]",
-    async execute(
-        bot: Eris.Client,
-        msg: Eris.Message,
-        args: string[],
-        commands: Map<string, CommandValue>,
-        aliases: Map<string,string>,
-        prefix: string
-    ){
-        let output;
+    async execute(ctx: CommandContext){
+        const {bot, msg, args, commands, aliases, prefix} = ctx;
+        let output: string;
 
         if(args.length==0){
             let commandList="";

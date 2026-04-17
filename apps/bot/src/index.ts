@@ -6,6 +6,8 @@ import path from "path";
 import * as dotenv from "dotenv";
 dotenv.config({path: "./.env"});
 
+import type { CommandContext, CommandValue } from "./commands/types.js";
+
 import * as Eris from "eris";
 
 const prefix = "%";
@@ -14,12 +16,13 @@ const bot: Eris.Client = new Eris.Client(`${process.env.TOKEN!}`, {
 	intents: [
 		"guilds",
 		"guildMessages",
+		"guildMembers",
 		"messageContent"
 	]
 });
 
-const commands = new Map();
-const aliases = new Map();
+const commands = new Map<string, CommandValue>();
+const aliases = new Map<string, string>();
 
 let warnings: string[] = [];
 let passes: string[] = [];
@@ -67,7 +70,7 @@ async function loadCommands(cleartoggle: boolean){
 
 		if(!cmd.name){
 			warnings.push(`[COMMAND] ${cmddir}. Missing command name.`);
-		}else if(commands.get(cmd.name) || commands.get(aliases.get(cmd.name))){
+		}else if(commands.get(cmd.name) || commands.get(aliases.get(cmd.name)??"")){
 			warnings.push(`[COMMAND] ${cmddir}. Duplicate command names.`);
 		}else if(!cmd.description){
 			warnings.push(`[COMMAND] ${cmddir}. Missing command description.`);
@@ -78,10 +81,21 @@ async function loadCommands(cleartoggle: boolean){
 		}else{
 			commands.set(cmd.name, cmd);
 			if(cmd.aliases){
-				passes.push(`[COMMAND] ${cmd.name} ( ${cmddir} ) with aliases [${cmd.aliases}]`);
+				const loadedAliases: string[] = [];
 
 				for (const alias of cmd.aliases) {
-					aliases.set(alias, cmd.name);
+					if(aliases.get(alias)){
+						warnings.push(`Ignored alias "${alias}" of command "${cmd.name}": Duplicate alias names.`);
+					}else{
+						aliases.set(alias, cmd.name);
+						loadedAliases.push(alias);
+					}
+				}
+				
+				if(loadedAliases.length==0){
+					passes.push(`[COMMAND] ${cmd.name} ( ${cmddir} ) without any aliases`);
+				}else{
+					passes.push(`[COMMAND] ${cmd.name} ( ${cmddir} ) with aliases [${loadedAliases}]`);
 				}
 			}else{
 				passes.push(`[COMMAND] ${cmd.name} ( ${cmddir} ) without any aliases`);
@@ -130,7 +144,7 @@ async function loadEvents(cleartoggle: boolean){
 
 		if(!event.name){
 			warnings.push(`[EVENT] ${eventdir}. Missing event name.`);
-		}else if(event.once){
+		}else if(event.once === undefined){
 			warnings.push(`${eventdir}. Missing once? boolean.`);
 		}else if(typeof event.execute !== "function") {
 			warnings.push(`[EVENT] ${eventdir}. Missing execute function.`);
@@ -156,10 +170,6 @@ warnings.forEach((warning)=>{
 console.log(`Loaded: ${passes.length}`);
 console.log(`Skipped: ${warnings.length}`);
 
-bot.once("ready", async () => {
-	//console.log(`${colors.blue(bot.user.username + "#" + bot.user.discriminator)} is ready to run with ${passes.length+warnings.length} commands detected.`);
-});
-
 bot.on("messageCreate", async (msg) => {
 	if (msg.author.bot || !msg.content.startsWith(prefix)) return;
 //	bot.createMessage(msg.channel.id, `you said ${msg.content}`);
@@ -168,16 +178,21 @@ bot.on("messageCreate", async (msg) => {
 	const command = args[0].slice(1);
 	args.shift();
 
-	const cmd = commands.get(command) || commands.get(aliases.get(command));
+	const cmd = commands.get(command) || commands.get(aliases.get(command)??"");
 	if(!cmd) return bot.createMessage(msg.channel.id, `command \`${command}\` not recognized.`);
 
-	if(commands.get(command) && command=="help"){
-		cmd.execute(bot, msg, args, commands, aliases, prefix);
-	}else if(commands.get(command) && command=="refresh"){
-		cmd.execute(bot, msg, loadCommands);
-	}else{
-		await cmd.execute(bot, msg, args);
+	const ctx: CommandContext = {
+		bot,
+		msg,
+		args,
+		commands,
+		aliases,
+		prefix,
+		loadCommands,
+		loadEvents
 	}
+
+	await cmd.execute(ctx);
 });
 
 bot.connect()

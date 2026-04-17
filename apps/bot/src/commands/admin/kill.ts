@@ -1,4 +1,5 @@
 import Eris from "eris";
+import type { CommandContext } from "../types.js";
 
 export default {
     name: "kill",
@@ -7,7 +8,8 @@ export default {
     ],
     description: "kill the bot process",
     usage: "ping",
-    async execute(bot: Eris.Client, msg: Eris.Message, args: string[]){
+    async execute(ctx: CommandContext){
+        const {bot, msg} = ctx;
         await bot.createMessage(msg.channel.id, `\`\`\`Killing bot process.\`\`\``);
         process.exit();
     }

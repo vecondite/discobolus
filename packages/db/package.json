@@ -1,5 +1,5 @@
 {
-  "name": "bot",
+  "name": "@discobolus/db",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,9 +12,13 @@
   "license": "ISC",
   "packageManager": "pnpm@10.33.0",
   "dependencies": {
-    "@discobolus/db": "workspace:*",
-    "colors": "^1.4.0",
     "dotenv": "^17.4.2",
-    "eris": "^0.18.0"
+    "mysql2": "^3.22.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0"
+  },
+  "exports": {
+    ".": "./src/index.ts"
   }
 }

@@ -1,17 +1,16 @@
 import colors from "colors";
 import Eris from "eris";
+import type { CommandContext } from "../types.js";
 
 export default {
     name: "refresh",
     description: "refresh bot commands",
     usage: "refresh",
-    async execute(
-        bot: Eris.Client,
-        msg: Eris.Message,
-        loadCommands: (cleartoggle: boolean) => { warnings: string[], passes: string[] }
-    ){
+    async execute(ctx: CommandContext){
+        const {bot, msg, loadCommands, loadEvents} = ctx
         let updates = "";
         const { warnings, passes } = await loadCommands(true);
+        await loadEvents(true);
         passes.forEach((pass)=>{
             //console.log(`${("[LOAD]" as any).brightGreen} ${pass}`);
             updates+=`[LOAD] ${pass}\n`;
