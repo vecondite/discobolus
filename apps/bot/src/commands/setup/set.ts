@@ -18,7 +18,7 @@ export default {
             };
         }else if(args[0]==="welcmsg"){
             args.shift();
-            output = await welcmsg(args);
+            output = await welcmsg(bot, msg, args);
         }else{
             args.shift();
             output = {
