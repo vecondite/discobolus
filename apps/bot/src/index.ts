@@ -71,16 +71,18 @@ async function loadCommands(cleartoggle: boolean){
 		}
 		const cmddir = dirs.slice(dirs.indexOf("commands")).join("/");
 
-		if(!cmd.name){
-			skips.push(`[COMMAND] ${cmddir}. Missing command name.`);
+		if(cmd.skip){
+			skips.push(`[COMMAND] ${cmddir}: ${cmd.skip}`)
+		}else if(!cmd.name){
+			skips.push(`[COMMAND] ${cmddir}: Missing command name.`);
 		}else if(commands.get(cmd.name) || commands.get(aliases.get(cmd.name)??"")){
-			skips.push(`[COMMAND] ${cmddir}. Duplicate command names.`);
+			skips.push(`[COMMAND] ${cmddir}: Duplicate command names.`);
 		}else if(!cmd.description){
-			skips.push(`[COMMAND] ${cmddir}. Missing command description.`);
+			skips.push(`[COMMAND] ${cmddir}: Missing command description.`);
 		}else if(!cmd.usage){
-			skips.push(`[COMMAND] ${cmddir}. Missing command usage.`);
+			skips.push(`[COMMAND] ${cmddir}: Missing command usage.`);
 		}else if(typeof cmd.execute !== "function") {
-			skips.push(`[COMMAND] ${cmddir}. Missing execute function.`);
+			skips.push(`[COMMAND] ${cmddir}: Missing execute function.`);
 		}else{
 			commands.set(cmd.name, cmd);
 			if(cmd.aliases){
@@ -150,11 +152,11 @@ async function loadEvents(cleartoggle: boolean){
 		const eventdir = dirs.slice(dirs.indexOf("events")).join("/");
 
 		if(!event.name){
-			skips.push(`[EVENT] ${eventdir}. Missing event name.`);
+			skips.push(`[EVENT] ${eventdir}: Missing event name.`);
 		}else if(event.once === undefined){
-			skips.push(`${eventdir}. Missing once? boolean.`);
+			skips.push(`${eventdir}: Missing once? boolean.`);
 		}else if(typeof event.execute !== "function") {
-			skips.push(`[EVENT] ${eventdir}. Missing execute function.`);
+			skips.push(`[EVENT] ${eventdir}: Missing execute function.`);
 		}else{
 			const listener = (...args: any[]) => event.execute(bot, ...args);
 			event.once ? bot.once(event.name, listener) : bot.on(event.name, listener);

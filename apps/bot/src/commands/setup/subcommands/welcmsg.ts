@@ -1,6 +1,10 @@
 import type { Output } from "../../types.js";
 
-export default async function welcmsg(args: string[]){
+export default {
+    skip: "subcommand."
+}
+
+export async function welcmsg(args: string[]){
     let output: Output;
 
     if(args.length==0){

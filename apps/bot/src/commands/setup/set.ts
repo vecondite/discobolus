@@ -1,6 +1,6 @@
 import Eris from "eris";
 import type { CommandContext, Output } from "../types.js";
-import welcmsg from "./subcommands/welcmsg.js";
+import {welcmsg} from "./subcommands/welcmsg.js";
 
 export default {
     name: "set",

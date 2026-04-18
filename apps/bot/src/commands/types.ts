@@ -1,6 +1,7 @@
 import Eris from "eris";
 
 export interface CommandValue {
+    skip?: string;
     name: string;
     description: string;
     usage: string;
