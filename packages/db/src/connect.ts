@@ -1,17 +1,14 @@
-import * as dotenv from "dotenv";
-dotenv.config({path: "./.env"});
-
 import mysql from "mysql2";
 
 const baseConfig = {
   host: process.env.HOST!,
-  user: process.env.USER!,
+  user: process.env.USERNAME!,
   password: process.env.PASSWORD!,
 };
 
 const mainPool = mysql.createPool({
   host: process.env.HOST!,
-  user: process.env.USER!,
+  user: process.env.USERNAME!,
   password: process.env.PASSWORD!,
 }).promise();
 

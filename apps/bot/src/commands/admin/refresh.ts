@@ -9,18 +9,22 @@ export default {
     async execute(ctx: CommandContext){
         const {bot, msg, loadCommands, loadEvents} = ctx
         let updates = "";
-        const { warnings, passes } = await loadCommands(true);
+        const { skips, loads, unloads } = await loadCommands(true);
         await loadEvents(true);
-        passes.forEach((pass)=>{
-            //console.log(`${("[LOAD]" as any).brightGreen} ${pass}`);
-            updates+=`[LOAD] ${pass}\n`;
+        unloads.forEach((unload)=>{
+            //console.warn(`${("[SKIP]" as any).brightYellow} ${skip}`);
+            updates+=`[UNLOAD] ${unload}\n`;
         });
-        warnings.forEach((warning)=>{
-            //console.warn(`${("[SKIP]" as any).brightYellow} ${warning}`);
-            updates+=`[SKIP] ${warning}\n`;
+        loads.forEach((load)=>{
+            //console.log(`${("[LOAD]" as any).brightGreen} ${load}`);
+            updates+=`[LOAD] ${load}\n`;
+        });
+        skips.forEach((skip)=>{
+            //console.warn(`${("[SKIP]" as any).brightYellow} ${skip}`);
+            updates+=`[SKIP] ${skip}\n`;
         });
         bot.createMessage(msg.channel.id, `\`\`\`${updates}\`\`\``);
-        //console.log(`Loaded: ${passes.length}`);
-        //console.log(`Skipped: ${warnings.length}`);
+        //console.log(`Loaded: ${loads.length}`);
+        //console.log(`Skipped: ${skips.length}`);
     }
 };

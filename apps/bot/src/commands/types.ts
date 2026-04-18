@@ -9,8 +9,9 @@ export interface CommandValue {
 }
 
 export type LoadResult = {
-    warnings: string[];
-    passes: string[];
+    skips: string[];
+    loads: string[];
+    unloads: string[];
 };
 
 export type CommandContext = {
