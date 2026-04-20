@@ -71,16 +71,18 @@ async function loadCommands(cleartoggle: boolean){
 		}
 		const cmddir = dirs.slice(dirs.indexOf("commands")).join("/");
 
+		const tag = cmd.name?.split(" ").length>1 ? "[SUBCOMMAND]" : "[COMMAND]"
+
 		if(!cmd.name){
-			skips.push(`[COMMAND] ${cmddir}: Missing command name.`);
+			skips.push(`[COMMAND?] ${cmddir}: Missing command name.`);
 		}else if(commands.get(cmd.name) || commands.get(aliases.get(cmd.name)??"")){
-			skips.push(`[COMMAND] ${cmddir}: Duplicate command names.`);
+			skips.push(`${tag} ${cmddir}: Duplicate command names.`);
 		}else if(!cmd.description){
-			skips.push(`[COMMAND] ${cmddir}: Missing command description.`);
+			skips.push(`${tag} ${cmddir}: Missing command description.`);
 		}else if(!cmd.usage){
-			skips.push(`[COMMAND] ${cmddir}: Missing command usage.`);
+			skips.push(`${tag} ${cmddir}: Missing command usage.`);
 		}else if(typeof cmd.execute !== "function") {
-			skips.push(`[COMMAND] ${cmddir}: Missing execute function.`);
+			skips.push(`${tag} ${cmddir}: Missing execute function.`);
 		}else{
 			commands.set(cmd.name, cmd);
 			if(cmd.aliases){
@@ -96,12 +98,12 @@ async function loadCommands(cleartoggle: boolean){
 				}
 				
 				if(loadedAliases.length==0){
-					loads.push(`[COMMAND] ${cmd.name} ( ${cmddir} ) without any aliases`);
+					loads.push(`${tag} ${cmd.name} ( ${cmddir} ) without any aliases`);
 				}else{
-					loads.push(`[COMMAND] ${cmd.name} ( ${cmddir} ) with aliases [${loadedAliases}]`);
+					loads.push(`${tag} ${cmd.name} ( ${cmddir} ) with aliases [${loadedAliases}]`);
 				}
 			}else{
-				loads.push(`[COMMAND] ${cmd.name} ( ${cmddir} ) without any aliases`);
+				loads.push(`${tag} ${cmd.name} ( ${cmddir} ) without any aliases`);
 			}
 
 			if(cmd.name.split(" ").length>1){
