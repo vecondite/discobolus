@@ -6,7 +6,7 @@ export interface CommandValue {
     usage: string;
     aliases?: string[];
     subcommands?: Map<string, CommandValue>
-    execute: (ctx: CommandContext) => Promise<void|Output>;
+    execute: (ctx: CommandContext) => Promise<void>;
 }
 
 export type LoadResult = {
@@ -24,9 +24,4 @@ export type CommandContext = {
     prefix: string;
     loadCommands: (cleartoggle: boolean) => Promise<LoadResult>;
     loadEvents: (cleartoggle: boolean) => {};
-};
-
-export type Output = {
-  error: boolean;
-  message: string;
 };

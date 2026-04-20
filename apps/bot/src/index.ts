@@ -202,7 +202,17 @@ bot.on("messageCreate", async (msg) => {
 	const command: string = args[0].slice(1);
 	args.shift();
 
-	const cmd: CommandValue = commands.get(command) || commands.get(aliases.get(command)??"")!;
+	let cmd: CommandValue;
+
+	let subCommand: CommandValue = commands.get(`${command} ${args[0]}`)!||commands.get(aliases.get(`${command} ${args[0]}`)!);
+
+	if(subCommand){
+		cmd=subCommand;
+		args.shift();
+	}else{
+		cmd=commands.get(command) || commands.get(aliases.get(command)??"")!;
+	}
+
 	if(!cmd) return bot.createMessage(msg.channel.id, `command \`${command}\` not recognized.`);
 
 	const ctx: CommandContext = {
