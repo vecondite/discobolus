@@ -1,12 +1,12 @@
 import Eris from "eris";
 
 export interface CommandValue {
-    skip?: string;
     name: string;
     description: string;
     usage: string;
     aliases?: string[];
-    execute: (ctx: CommandContext) => Promise<void>;
+    subcommands?: Map<string, CommandValue>
+    execute: (ctx: CommandContext) => Promise<void|Output>;
 }
 
 export type LoadResult = {

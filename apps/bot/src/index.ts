@@ -71,9 +71,7 @@ async function loadCommands(cleartoggle: boolean){
 		}
 		const cmddir = dirs.slice(dirs.indexOf("commands")).join("/");
 
-		if(cmd.skip){
-			skips.push(`[COMMAND] ${cmddir}: ${cmd.skip}`)
-		}else if(!cmd.name){
+		if(!cmd.name){
 			skips.push(`[COMMAND] ${cmddir}: Missing command name.`);
 		}else if(commands.get(cmd.name) || commands.get(aliases.get(cmd.name)??"")){
 			skips.push(`[COMMAND] ${cmddir}: Duplicate command names.`);
@@ -104,6 +102,16 @@ async function loadCommands(cleartoggle: boolean){
 				}
 			}else{
 				loads.push(`[COMMAND] ${cmd.name} ( ${cmddir} ) without any aliases`);
+			}
+
+			if(cmd.name.split(" ").length>1){
+				const commandSplit: string[] = cmd.name.split(" ");
+				const mainCommand: CommandValue = commands.get(commandSplit[0]!)!;
+				const subCommand: CommandValue = commands.get(cmd.name)!;
+
+				if(!mainCommand.subcommands) mainCommand.subcommands=new Map<string, CommandValue>;
+
+				mainCommand.subcommands?.set(cmd.name, subCommand);
 			}
 		}
 	};
@@ -189,10 +197,10 @@ bot.on("messageCreate", async (msg) => {
 //	bot.createMessage(msg.channel.id, `you said ${msg.content}`);
 	const args = msg.content.split(" ");
 	if(!args[0]) return;
-	const command = args[0].slice(1);
+	const command: string = args[0].slice(1);
 	args.shift();
 
-	const cmd = commands.get(command) || commands.get(aliases.get(command)??"");
+	const cmd: CommandValue = commands.get(command) || commands.get(aliases.get(command)??"")!;
 	if(!cmd) return bot.createMessage(msg.channel.id, `command \`${command}\` not recognized.`);
 
 	const ctx: CommandContext = {

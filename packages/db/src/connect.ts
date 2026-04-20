@@ -21,8 +21,9 @@ export async function initDB(){
     await mainPool.query(`CREATE DATABASE IF NOT EXISTS guilds`);
     await guildPool.query(`
         CREATE TABLE IF NOT EXISTS welcome_messages (
-            gid VARCHAR(20) PRIMARY KEY,
-            channel VARCHAR(20),
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            gid VARCHAR(20),
+            cid VARCHAR(20),
             message TEXT
         )
     `)

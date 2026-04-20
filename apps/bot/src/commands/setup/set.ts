@@ -1,30 +1,35 @@
 import Eris from "eris";
-import type { CommandContext, Output } from "../types.js";
-import {welcmsg} from "./subcommands/welcmsg.js";
+import { type CommandValue, type CommandContext, type Output } from "../types.js";
 
 export default {
     name: "set",
-    description: "basic stats of the bot",
-    usage: "ping",
+    description: "setup your server with the bot",
+    usage: "set <subcommand>",
     async execute(ctx: CommandContext){
-        const { args, bot, msg, prefix } = ctx;
+        const { args, bot, msg, prefix, commands } = ctx;
 
-        let output: Output;
+        let output: Output | void;
 
-        if(!args || args.length == 0){
+        if(!args || !args[0] || args.length == 0){
             output = {
                 "error": true,
                 "message": `No subcommand specified`
             };
-        }else if(args[0]==="welcmsg"){
-            args.shift();
-            output = await welcmsg(bot, msg, args);
         }else{
-            args.shift();
-            output = {
-                "error": true,
-                "message": `Subcommand ${args[0]} not recognized`
+            const subcommand = commands.get(`set ${args[0]}`)!;
+            if(subcommand){
+                args.shift();
+                output = await subcommand.execute(ctx);
+            }else{
+                output = {
+                    "error": true,
+                    "message": `subcommand ${args[0]} not recognized`
+                }
             }
+        }
+
+        if(!output){
+            return bot.createMessage(msg.channel.id, `Subcommand didn't return output.`);
         }
 
         if(output.error){

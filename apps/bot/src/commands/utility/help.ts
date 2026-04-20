@@ -13,10 +13,12 @@ export default {
             let commandList="";
 
             for(const [name, command] of commands){
-                if(!command.aliases){
-                    commandList+=`${name}\n`;
-                }else{
-                    commandList+=`${name} (${command.aliases})\n`
+                if(name.split(" ").length<2){
+                    if(!command.aliases){
+                        commandList+=`${name}\n`;
+                    }else{
+                        commandList+=`${name} (${command.aliases})\n`
+                    }
                 }
             }
 
@@ -32,6 +34,17 @@ export default {
                     output = `# ${command.name}\nAliases:\n\`\`\`${command.aliases}\`\`\`\nDescription:\`\`\`${command.description}\`\`\`\nUsage: \`\`\`${prefix}${command.usage}\`\`\``
                 }else{
                     output = `# ${command.name}\nDescription:\`\`\`${command.description}\`\`\`\nUsage: \`\`\`${prefix}${command.usage}\`\`\``
+                }
+
+                if(command.subcommands){
+                    output += `\n## Subcommands\n`
+                    command.subcommands.forEach((subcommand)=>{
+                        if(subcommand.aliases){
+                            output += `## ${subcommand.name}\nAliases:\n> \`\`\`${subcommand.aliases}\`\`\`\nDescription:\n> \`\`\`${subcommand.description}\`\`\`\nUsage:    \n> \`\`\`${prefix}${subcommand.usage}\`\`\``
+                        }else{
+                            output += `## ${subcommand.name}\nDescription:\n> \`\`\`${subcommand.description}\`\`\`\nUsage:\n> \`\`\`${prefix}${subcommand.usage}\`\`\``
+                        }
+                    });
                 }
             }
         }
