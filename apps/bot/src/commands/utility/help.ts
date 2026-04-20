@@ -25,8 +25,20 @@ export default {
             output = `List of commands:\`\`\`\n${commandList}\`\`\`\nMore Help:\`\`\`${prefix}help <command>\`\`\``;
         }else{
             if(!args[0]) return;
-            
-            const command = commands.get(args[0]) || commands.get(aliases.get(args[0]) ?? "");
+
+            let command: CommandValue;
+            if(args[1]){
+                const subcommand = commands.get(`${args[0]} ${args[1]}`) || commands.get(aliases.get(`${args[0]} ${args[1]}`)!);
+                if(!subcommand){
+                    output=`subcommand \`${args[1]}\` not recognized}`;
+                    command=undefined!;
+                }else{
+                    command=subcommand;
+                }
+            }else{
+                command=commands.get(args[0]) || commands.get(aliases.get(args[0]) ?? "")!;
+            }
+
             if(!command){
                 output = `Command not found. For a list of commands: \`\`\`${prefix}help\`\`\``
             }else{
