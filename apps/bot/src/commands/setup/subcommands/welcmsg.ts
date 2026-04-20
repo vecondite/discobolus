@@ -6,7 +6,7 @@ export default {
     name: "set welcmsg",
     description: "setup a welcome message",
     aliases: ["set wm"],
-    usage: "set welcmsg <welcome message> [channel]",
+    usage: "set welcmsg <welcome message> [channel]\`\`\`\n> \`\`\`note: You can use {user} in the welcome message to mention the member joined.\n> ex: \"{user} just joined!\" -> \"@member just joined\"",
     async execute(ctx: CommandContext){
         const {bot, args, msg} = ctx;
 
